@@ -52,7 +52,7 @@ class Auth():
 
 class SQLClient():
 
-    def __init__(self, auth, session):
+    def __init__(self, auth):
         self.__auth = auth
         self.__session = aiohttp.ClientSession()
 
