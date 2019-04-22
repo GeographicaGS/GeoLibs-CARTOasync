@@ -5,9 +5,10 @@ from .exceptions import CartoException
 
 class SQLClient():
 
-    def __init__(self, auth):
+    def __init__(self, auth, session=None):
         self.__auth = auth
-        self.__session = aiohttp.ClientSession()
+        self.__session = session
+        self.__external_session = True if session is not None else False
 
     async def close(self):
         await self.__session.close()
@@ -24,15 +25,24 @@ class SQLClient():
             'ssl': self.__auth.ssl
         }
 
-        async with self.__session.post(self.__auth.sql_api_url, **kwargs) as resp:
-            if resp.status != 200:
-                return await self.handle_error(resp)
+        if self.__external_session:
+            async with self.__session.post(self.__auth.sql_api_url, **kwargs) as resp:
+                return await self.handle_response(resp, format)
 
-            elif format in ['json', 'geojson']:
-                return await resp.json()
+        else:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(self.__auth.sql_api_url, **kwargs) as resp:
+                    return await self.handle_response(resp, format)
 
-            else:
-                return await resp.read()
+    async def handle_response(self, resp, format):
+        if resp.status != 200:
+            return await self.handle_error(resp)
+
+        elif format in ['json', 'geojson']:
+            return await resp.json()
+
+        else:
+            return await resp.read()
 
     async def handle_error(self, resp):
         url = f'{resp.method} {resp.url.scheme}://{resp.url.host}{resp.url.path}'
