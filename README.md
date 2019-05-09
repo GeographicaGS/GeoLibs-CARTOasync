@@ -15,7 +15,7 @@ Asynchronous Python client for CARTO.
 ## Installation
 
 ```bash
-pip install cartoasync
+pip install geolibs-cartoasync
 ```
 
 ## Usage
